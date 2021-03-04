@@ -1,0 +1,123 @@
+---
+title: "America's Cup Predictor"
+author: "Brad Martin"
+date: "3/3/2021"
+logo: ACIcon.JPG
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(dplyr)
+library(ggplot2)
+```
+
+## Background
+<div style="float: left; width: 80%;">
+- **What is the America's cup?  **
+  + World's most prestigious sailing event  
+  + The Defender is the previous winner
+  + The Challenger is the winner of the Challenger Selection series  
+  + Queen Victoria once asked who was in 2nd place, the reply... "You Majesty, there is no second"
+- **Why Predict the 2021 Winner** 
+  + 36th America's Cup will be held in Auckland in March 2021
+  + 3 teams are Challenging for the right to face the Defender
+
+</div>
+
+<div style="float: right; width: 20%;">
+
+``` {r out.width="100%",fig.align="center"}
+knitr:: include_graphics('AC.JPG')
+```
+</div>
+
+## App Background
+- **Hypothesis**  
+  -The more teams in the Challenger selection series, the tougher the competition  
+  -The tougher the competition, the better chance the Challenger has of winning
+- **Data**    
+   - The results of previous America's Cups from 1851 to 2017 were obtained from a variety of sources. Refer to the app for more details.
+- **Model**   
+   - The outcome of the Americas Cup is binary - win or lose. The winning margin is irrelevant.  
+   - Therefore a Logistical Regression model was chosen with the ratio of Challengers to Defenders as the predictor and winner as the model output.
+
+
+## App and Model Example
+``` {r}
+numdefenders<-1
+numchallengers<-5
+inputratio<-numchallengers/numdefenders
+
+df<-read.csv("ACTeams.csv")
+df<-df %>% mutate(WinnerBin=ifelse(Winner=="Defender",1,0))
+df<-mutate(df,Ratio=Challengers/Defenders)
+
+df<-filter(df,Type=="Match")
+
+fit<-glm(WinnerBin~Ratio+1,data=df, family=binomial)
+prediction <-predict(fit,newdata=data.frame(Ratio=inputratio))
+if( prediction >= 0.5) {
+      predictedwinner <- "Defender"
+} else {
+  predictedwinner <-"Challenger"
+  }
+
+predictedresult<-predict(fit,newdata=data.frame(Ratio=inputratio))
+```
+- The user enters **`r numdefenders`** Defender and **`r numchallengers`** Challengers
+- Challenger to Defender Ratio is calculated as `r inputratio`
+- The Logistic Regression model predicts `r prediction` 
+- Therefore the winner is the **`r predictedwinner`**
+
+```{r fig.height=3, fig.width=6}
+g<- ggplot(data=df,aes(y=WinnerBin,x=Ratio)) +
+    geom_point(color="red") +
+    xlab("Challenger / Defender Ratio") +   
+    ylab("Winner") +  
+    scale_y_continuous(breaks=c(0,1),labels= c("Challenger","Defender")) +
+    geom_point(aes(y=predictedresult,x=inputratio),col="blue",size=5) +
+    geom_hline(yintercept = 0.5,linetype="dashed", color="blue")
+g
+```
+
+## Results
+
+
+```{r}
+numdefenders<-1
+numchallengers<-9
+inputratio<-numchallengers/numdefenders
+
+if(predict(fit,newdata=data.frame(Ratio=inputratio)) >= 0.5) {
+      predictedwinner <- "Defender"
+} else {
+  predictedwinner <-"Challenger"
+  }
+
+```
+- **Comparing against historical results**  
+     + The last America's cup held in Auckland was in 2003
+     + **`r numdefenders`** Defender and **`r numchallengers`** Challengers 
+     + The Defender, Team New Zealand lost to the Challenger, Alinghi (Switzerland)
+     + Predicted winner : **`r predictedwinner`**
+
+```{r}
+numdefenders<-1
+numchallengers<-3
+inputratio<-numchallengers/numdefenders
+
+if(predict(fit,newdata=data.frame(Ratio=inputratio)) >= 0.5) {
+      predictedwinner <- "Defender"
+} else {
+  predictedwinner <-"Challenger"
+  }
+
+```    
+- **Who will win the 2021 America's Cup?**
+     + **`r numdefenders`** Defender and **`r numchallengers`** Challengers
+     + The Defender, Emirates Team New Zealand will face the Challenger, Luna Rossa Prada Pirelli (Italy)
+     + Predicted winner : **`r predictedwinner`**
+     
+
+
